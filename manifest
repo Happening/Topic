@@ -1,0 +1,5 @@
+name: Announcement
+description: A single announcement with commenting ability
+icon: amplifier
+api: 2
+store: 500
