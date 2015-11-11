@@ -12,21 +12,22 @@ Form = require 'form'
 
 exports.render = !->
 	shared = Db.shared
-	ownerId = Plugin.ownerId()
+	ownerId = 1
 
 	Dom.div !->
 		Dom.style backgroundColor: '#fff', margin: '-4px -8px', padding: '8px', borderBottom: '2px solid #ccc'
 
 		Dom.div !->
 			Dom.style display_: 'box'
-			Ui.avatar Plugin.userAvatar(ownerId)
+			Ui.avatar Plugin.userAvatar(ownerId),
+				onTap: !-> Plugin.userInfo(ownerId)
 			
 			Dom.h1 !->
 				Dom.style display: 'block', _boxFlex: 2, marginLeft: '10px'
 				Dom.text shared.get('subject')
 		Dom.div !->
 			Dom.style margin: '0 0 0 56px'
-			Dom.richText shared.get('text')
+			Dom.brText shared.get('text')
 
 			Dom.div !->
 				Dom.style
@@ -37,77 +38,12 @@ exports.render = !->
 				Dom.text " • "
 				Time.deltaText Plugin.created()
 
-	Dom.div !->
-		Dom.style margin: '0 -8px'
-		require('social').renderComments 'comments'
-	###
-	Dom.div !->
-		Dom.style margin: '8px 0'
-		shared.ref('comments')?.iterate (comment) !->
-			Dom.div !->
-				Dom.style
-					display_: 'box'
-					_boxAlign: 'center'
-
-				Ui.avatar Plugin.userAvatar(comment.get('userId'))
-
-				Dom.section !->
-					Dom.style
-						_boxFlex: 1
-						marginLeft: '8px'
-						margin: '4px'
-					Dom.text comment.get('comment')
-					Dom.div !->
-						Dom.style
-							textAlign: 'left'
-							fontSize: '70%'
-							color: '#aaa'
-							padding: '2px 0 0'
-						Dom.text Plugin.userName(comment.get('userId'))
-						Dom.text " • "
-						Time.deltaText comment.get('time')
-
-	editingItem = Obs.create(false)
-	Dom.div !->
-		Dom.style display_: 'box', _boxAlign: 'center', marginTop: '8px'
-
-		Ui.avatar Plugin.userAvatar()
-
-		addE = null
-		save = !->
-			return if !addE.value().trim()
-			Server.sync 'addComment', addE.value().trim()
-			addE.value ""
-			editingItem.set(false)
-			Form.blur()
-
-		Dom.section !->
-			Dom.style display_: 'box', _boxFlex: 1, _boxAlign: 'center', margin: '4px'
-			Dom.div !->
-				Dom.style _boxFlex: 1
-				log 'rendering form.text'
-				addE = Form.text
-					autogrow: true
-					name: 'comment'
-					text: tr("Add a comment")
-					simple: true
-					onChange: (v) !->
-						editingItem.set(!!v?.trim())
-					onReturn: save
-					inScope: !->
-						Dom.prop 'rows', 1
-						Dom.style
-							border: 'none'
-							width: '100%'
-							fontSize: '100%'
-
-			Ui.button !->
-				Dom.style
-					marginRight: 0
-					visibility: (if editingItem.get() then 'visible' else 'hidden')
-				Dom.text tr("Add")
-			, save
-	###
+	if Db.shared.get('open') ? true
+		Dom.div !->
+			Dom.style margin: '0 -8px'
+			require('social').renderComments
+				path: []
+				key: 'comments'
 
 exports.renderSettings = !->
 	Form.input
@@ -115,9 +51,21 @@ exports.renderSettings = !->
 		text: tr 'Subject'
 		value: Db.shared.func('subject') if Db.shared
 
+	Form.condition (values) ->
+		tr("A subject is required") if !values.subject
+
 	Form.text
 		name: 'text'
 		text: tr 'Text'
 		autogrow: true
 		value: Db.shared.func('text') if Db.shared
 		inScope: !-> Dom.prop 'rows', 1
+
+	Form.sep()
+	Form.check
+		name: 'open'
+		text: tr("Allow comments")
+		value: ->
+			(Db.shared.get('open') if Db.shared) ? true
+
+

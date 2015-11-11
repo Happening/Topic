@@ -5,11 +5,6 @@ Event = require 'event'
 exports.onInstall = (config) !->
 	if config?
 		Db.shared.merge config
-		if config.subject
-			Event.create
-				unit: 'announcement'
-				text: "#{Plugin.userName(Plugin.ownerId())} announces: #{config.subject}"
-				new: ['all', -Plugin.ownerId()]
 
 exports.onConfig = (config) !->
 	Db.shared.merge config
