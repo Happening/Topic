@@ -1,7 +1,5 @@
-name: Post
-description: A single announcement with commenting ability.
-icon: amplifier
+name: Topic Chat
+description: A conversation about a specific subject.
+icon: chat2
 api: 3
-store: 1300
-type: msg
-
+store: 1249

@@ -1,28 +1,11 @@
+App = require 'app'
+Comments = require 'comments'
 Db = require 'db'
-Plugin = require 'plugin'
 Event = require 'event'
 
-exports.onInstall = (config) !->
-	if config?
-		Db.shared.merge config
-
-exports.onConfig = (config) !->
-	Db.shared.merge config
-
-exports.getTitle = ->
-	Db.shared.get 'subject'
-
-exports.client_addComment = (comment) !->
-	maxCommentId = Db.shared.modify 'maxCommentId', (v) -> (v||0) + 1
-	nowTime = Math.round(Date.now()*.001)
-
-	Db.shared.set 'lastEventTime', nowTime
-	Db.shared.set 'comments', maxCommentId,
-		userId: Plugin.userId()
-		time: nowTime
-		comment: comment
-
-	Event.create
-		unit: 'comment'
-		text: "Comment by #{Plugin.userName()}: #{comment}"
-		read: [Plugin.userId()]
+exports.onInstall = exports.onConfig = (config) !->
+	if config.commentSnip or config.commentText
+		Comments.post
+			c: config.commentText
+			p: config.commentSnip
+			u: App.userId()
